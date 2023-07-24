@@ -29,7 +29,8 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError }) => {
 
   useEffect(() => {
     const initCamera = () => {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      if (navigator.mediaDevices) {
+        // if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         Quagga.init(
           {
             inputStream: {
