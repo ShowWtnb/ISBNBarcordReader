@@ -2,14 +2,17 @@ import React, { useEffect } from 'react'
 import Quagga from '@ericblade/quagga2'
 import { Container, Video, ScanMarker, Marker, Info } from './styles'
 import { validationIsbn } from '@/utils/isbn'
+import { Button, IconButton, Tooltip } from '@mui/material'
+import { Close } from '@mui/icons-material'
 
 interface PropsI {
   receiveIsbn: any
   receiveError: any
+  onCanceled: any
 }
 
-const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError }) => {
-  let scannerAttemps = 0
+const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError, onCanceled }) => {
+  let scannerAttempts = 0
 
   const onDetected = (response: any): void => {
     Quagga.offDetected(onDetected)
@@ -20,10 +23,11 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError }) => {
     if (validationIsbn(isbnCode)) {
       console.log('isbn read ' + isbnCode);
       receiveIsbn(isbnCode)
-    } else if (scannerAttemps >= 5) {
+    } else if (scannerAttempts >= 5) {
+      console.log('It is not possible to read the code of the book');
       receiveError('It is not possible to read the code of the book')
     }
-    scannerAttemps++
+    scannerAttempts++
     Quagga.onDetected(onDetected)
   }
 
@@ -62,6 +66,11 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError }) => {
     initCamera()
   })
 
+  function onCloseClick(event: any): void {
+    console.log('Scanner onCloseClick');
+    onCanceled();
+  }
+
   return (
     <>
       <Video id="video" />
@@ -71,6 +80,12 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError }) => {
           <Marker />
         </ScanMarker>
         <Info>Point to the book barcode</Info>
+        <Tooltip title={'Close Camera'}>
+          <IconButton aria-label="close" onClick={onCloseClick}>
+            <Close />
+          </IconButton>
+
+        </Tooltip>
       </Container>
     </>
   )
