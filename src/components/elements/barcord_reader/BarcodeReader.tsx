@@ -21,6 +21,10 @@ export default function BarcodeReader() {
     function onScanCanceled(event: any): void {
         setIsScannerVisible(false);
     }
+    function onISBNRead(event: any): void {
+        setIsScannerVisible(false);
+        setIsbn(event);
+    }
     return (
         <>
             <Box margin={1} textAlign='center'>
@@ -47,7 +51,7 @@ export default function BarcodeReader() {
                         isScannerVisible ?
                             <Grid item xs={12}>
                                 <Box textAlign='center'>
-                                    <Scanner receiveIsbn={setIsbn} receiveError={setScanError} onCanceled={onScanCanceled} />
+                                    <Scanner receiveIsbn={onISBNRead} receiveError={setScanError} onCanceled={onScanCanceled} />
                                 </Box>
                             </Grid>
                             :
