@@ -498,7 +498,8 @@ export const add_item = (json_data: object, token: string) => {
     return new Promise<Response>((resolve, reject) => {
         const data = JSON.stringify(json_data);
         // console.log('add_item', data)
-        var res = fetch(`${process.env.NEXT_PUBLIC_SITE}/api/notion_api`, {
+        var res = fetch(`api/notion_api`, {
+            // var res = fetch(`${process.env.NEXT_PUBLIC_SITE}/api/notion_api`, {
             "headers": {
                 "accept": "application/json",
                 "Authorization": `Bearer ${token}`,
