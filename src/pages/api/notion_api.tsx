@@ -10,6 +10,7 @@ export default function handler(
     res: NextApiResponse
     // res: NextApiResponse<Data>
 ) {
+
     if (req.method === 'POST') {
         // console.log('notion_api', req)
         // console.log('notion_api headers', req.headers)
