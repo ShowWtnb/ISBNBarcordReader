@@ -16,29 +16,32 @@ export default function handler(
         // console.log('notion_api body', req.body)
         // console.log('notion_api', req.headers["Notion-Version"])
 
-        var result = fetch(`https://api.notion.com/v1/pages`, {
-            "headers": {
-                "accept": "application/json",
-                "Authorization": `${req.headers.authorization}`,
-                "Content-Type": `application/json`,
-                "Notion-Version": `2022-06-28`,
-                // "Access-Control-Allow-Origin": `*`,
-            },
-            "method": "POST",
-            "body": JSON.stringify(req.body)
-        });
-        result.then((result) => {
-            if (result.status != 200) {
-                console.log('notion_api Error', result);
-                // alert(`Error on uploading`);
-                res.status(result.status).json(result.body)
-                // reject(result);
-                return;
-            }
-            res.status(result.status).json(result.body)
+        res.status(200).json({ 'test': 'test body' })
 
-            return;
-        });
+
+        // var result = fetch(`https://api.notion.com/v1/pages`, {
+        //     "headers": {
+        //         "accept": "application/json",
+        //         "Authorization": `${req.headers.authorization}`,
+        //         "Content-Type": `application/json`,
+        //         "Notion-Version": `2022-06-28`,
+        //         // "Access-Control-Allow-Origin": `*`,
+        //     },
+        //     "method": "POST",
+        //     "body": JSON.stringify(req.body)
+        // });
+        // result.then((result) => {
+        //     if (result.status != 200) {
+        //         console.log('notion_api Error', result);
+        //         // alert(`Error on uploading`);
+        //         res.status(result.status).json(result.body)
+        //         // reject(result);
+        //         return;
+        //     }
+        //     res.status(result.status).json(result.body)
+
+        //     return;
+        // });
     }
 
 }
