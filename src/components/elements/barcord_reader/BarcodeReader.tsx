@@ -75,7 +75,7 @@ export default function BarcodeReader() {
         // console.log('BarcodeReader onIsbnTextChanged', event.target.value);
         setIsbn(event.target.value);
     }
-    const [DbId, setDbid] = useState<string>()
+    const [DbId, setDbid] = useState<string>('')
     function onDbidTextChanged(event: any): void {
         // console.log('BarcodeReader onDbidTextChanged', event.target.value);
         setDbid(event.target.value);
@@ -98,7 +98,7 @@ export default function BarcodeReader() {
         }
     }, [DbId, DBIDChecked])
     // Token
-    const [token, setToken] = useState<string>()
+    const [token, setToken] = useState<string>('')
     function onTokenTextChanged(event: any): void {
         // console.log('BarcodeReader onTokenTextChanged', event.target.value);
         setToken(event.target.value);
@@ -179,7 +179,7 @@ export default function BarcodeReader() {
                                 </Grid>
                                 <Grid item xs={8}>
                                     <Box textAlign='center'>
-                                        <TextField id="outlined-basic" label="Notion DB ID" variant="outlined" value={DbId} onChange={onDbidTextChanged} />
+                                        <TextField id="outlined-basic" label="Notion DB ID" variant="outlined" defaultValue={DbId} value={DbId} onChange={onDbidTextChanged} />
                                     </Box>
                                 </Grid>
                                 <Grid item xs={2}>
@@ -216,7 +216,7 @@ export default function BarcodeReader() {
                                 </Grid>
                                 <Grid item xs={8}>
                                     <Box textAlign='center'>
-                                        <TextField id="outlined-basic" label="NotionAPI Token" variant="outlined" value={token} onChange={onTokenTextChanged} />
+                                        <TextField id="outlined-basic" label="NotionAPI Token" variant="outlined" defaultValue={token} value={token} onChange={onTokenTextChanged} />
                                     </Box>
                                 </Grid>
                                 <Grid item xs={2}>
@@ -494,12 +494,36 @@ const JSON_DATA = {
         }
     }
 }
+// export const add_item = (json_data: object, token: string) => {
+//     return new Promise<Response>((resolve, reject) => {
+//         const data = JSON.stringify(json_data);
+//         // console.log('add_item', data)
+//         var res = fetch(`api/notion_api`, {
+//             // var res = fetch(`${process.env.NEXT_PUBLIC_SITE}/api/notion_api`, {
+//             "headers": {
+//                 "accept": "application/json",
+//                 "Authorization": `Bearer ${token}`,
+//                 "Content-Type": `application/json`,
+//                 "Notion-Version": `2022-06-28`,
+//             },
+//             "method": "POST",
+//             "body": data
+//         });
+//         res.then((response: Response) => {
+//             if (response.status !== 200) {
+//                 reject(response);
+//             }
+//             console.log('add_item', response);
+//             response.json().then((json) => {
+//                 console.log('add_item json', json);
+//             })
+//         })
+//     });
+// }
 export const add_item = (json_data: object, token: string) => {
-    return new Promise<Response>((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         const data = JSON.stringify(json_data);
-        // console.log('add_item', data)
-        var res = fetch(`api/notion_api`, {
-            // var res = fetch(`${process.env.NEXT_PUBLIC_SITE}/api/notion_api`, {
+        var res = fetch(`https://api.notion.com/v1/pages`, {
             "headers": {
                 "accept": "application/json",
                 "Authorization": `Bearer ${token}`,
@@ -509,14 +533,16 @@ export const add_item = (json_data: object, token: string) => {
             "method": "POST",
             "body": data
         });
-        res.then((response: Response) => {
-            if (response.status !== 200) {
-                reject(response);
+        res.then((result) => {
+            if (result.status != 200) {
+                console.log(result);
+                alert(`Error on uploading`);
+
+                reject(result);
+                return;
             }
-            console.log('add_item', response);
-            response.json().then((json) => {
-                console.log('add_item json', json);
-            })
-        })
+            resolve(result);
+            return;
+        });
     });
 }
