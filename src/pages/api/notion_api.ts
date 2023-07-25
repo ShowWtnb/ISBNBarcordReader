@@ -31,13 +31,11 @@ export default function handler(
             if (result.status != 200) {
                 console.log('notion_api Error', result);
                 // alert(`Error on uploading`);
-                res.status(result.status).json(result);
+                res.status(result.status).json(result.body)
                 // reject(result);
                 return;
             }
-            // resolve(result);
-            // console.log('notion_api', result)
-            res.status(result.status).json(result);
+            res.status(result.status).json(result.body)
 
             return;
         });

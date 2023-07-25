@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { HtmlTooltip } from "../ToolTip/HtmlTooltip";
 import { GetLocalStorage, SaveLocalStorage } from "@/utils/LocalStorage";
+import { NextApiResponse } from "next";
 
 const LOCAL_ID = 'ISBN_BARCODE_READER';
 
@@ -25,11 +26,22 @@ export default function BarcodeReader() {
     function onClickButton(event: any): void {
         setIsScannerVisible(true);
     }
+    const [uploadError, setUploadError] = useState<string>()
     function onClickUploadButton(event: any): void {
         // console.log('BarcodeReader onClickUploadButton', event);
         // アップロードする
         if (json2Notion !== undefined && json2Notion.parent.database_id !== undefined && json2Notion.parent.database_id !== 'N/A' && token !== undefined) {
-            add_item(json2Notion, token);
+            var res = add_item(json2Notion, token);
+            res.then((response: any) => {
+                if (response.status !== 200) {
+                    console.log('BarcodeReader onClickUploadButton error', response)
+                    setUploadError(response?.status + ' ' + response?.statusText)
+                }
+                setUploadError('')
+            }).catch((reason: any) => {
+                console.log('BarcodeReader onClickUploadButton error', reason)
+                setUploadError(reason?.status + ' ' + reason?.statusText)
+            })
         } else {
             console.log('BarcodeReader onClickUploadButton error', json2Notion, json2Notion.parent.database_id, token)
         }
@@ -246,6 +258,16 @@ export default function BarcodeReader() {
                             <Grid item xs={12}>
                                 <Box textAlign='center'>
                                     <Button variant="contained" onClick={onClickUploadButton}>Upload to Notion</Button>
+                                </Box>
+                            </Grid>
+                    }
+                    {
+                        isScannerVisible ?
+                            <></>
+                            :
+                            <Grid item xs={12}>
+                                <Box textAlign='center'>
+                                    <Typography >{uploadError}</Typography>
                                 </Box>
                             </Grid>
                     }
@@ -473,10 +495,10 @@ const JSON_DATA = {
     }
 }
 export const add_item = (json_data: object, token: string) => {
-    return new Promise((resolve, reject) => {
+    return new Promise<Response>((resolve, reject) => {
         const data = JSON.stringify(json_data);
         // console.log('add_item', data)
-        fetch('api/notion_api', {
+        var res = fetch('api/notion_api', {
             "headers": {
                 "accept": "application/json",
                 "Authorization": `Bearer ${token}`,
@@ -486,5 +508,14 @@ export const add_item = (json_data: object, token: string) => {
             "method": "POST",
             "body": data
         });
+        res.then((response: Response) => {
+            if (response.status !== 200) {
+                reject(response);
+            }
+            console.log('add_item', response);
+            response.json().then((json) => {
+                console.log('add_item json', json);
+            })
+        })
     });
 }
