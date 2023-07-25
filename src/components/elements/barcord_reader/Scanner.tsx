@@ -33,13 +33,13 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError, onCanceled }) =>
 
   useEffect(() => {
     const initCamera = () => {
+      // if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       if (navigator.mediaDevices) {
-        console.log('Scanner navigator.mediaDevices' + navigator.mediaDevices);
+        console.log('Scanner navigator.mediaDevices', navigator.mediaDevices);
         navigator.mediaDevices.enumerateDevices().then((device) => {
-          console.log('Scanner navigator.mediaDevices' + device);
+          console.log('Scanner navigator.mediaDevices', device);
         })
 
-        // if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         Quagga.init(
           {
             inputStream: {
@@ -67,9 +67,8 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError, onCanceled }) =>
         )
       }
     }
-
     initCamera()
-  })
+  },[])
 
   function onCloseClick(event: any): void {
     // console.log('Scanner onCloseClick');
