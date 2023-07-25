@@ -30,21 +30,24 @@ export default function BarcodeReader() {
     function onClickUploadButton(event: any): void {
         // console.log('BarcodeReader onClickUploadButton', event);
         // アップロードする
+        var errorMessage = ''
         if (json2Notion !== undefined && json2Notion.parent.database_id !== undefined && json2Notion.parent.database_id !== 'N/A' && token !== undefined) {
             var res = add_item(json2Notion, token);
             res.then((response: any) => {
                 if (response.status !== 200) {
                     console.log('BarcodeReader onClickUploadButton error', response)
-                    setUploadError(response?.status + ' ' + response?.statusText)
+                    errorMessage = (response?.status + ' ' + response?.statusText)
+                    setUploadError(errorMessage)
                 }
-                setUploadError('')
             }).catch((reason: any) => {
                 console.log('BarcodeReader onClickUploadButton error', reason)
-                setUploadError(reason?.status + ' ' + reason?.statusText)
+                errorMessage = (reason?.status + ' ' + reason?.statusText)
+                setUploadError(errorMessage)
             })
         } else {
             console.log('BarcodeReader onClickUploadButton error', json2Notion, json2Notion.parent.database_id, token)
         }
+        setUploadError(errorMessage)
     }
     function onScanCanceled(event: any): void {
         setIsScannerVisible(false);
@@ -179,7 +182,7 @@ export default function BarcodeReader() {
                                 </Grid>
                                 <Grid item xs={8}>
                                     <Box textAlign='center'>
-                                        <TextField id="outlined-basic" label="Notion DB ID" variant="outlined" defaultValue={DbId} value={DbId} onChange={onDbidTextChanged} />
+                                        <TextField id="outlined-basic" label="Notion DB ID" variant="outlined" value={DbId} onChange={onDbidTextChanged} />
                                     </Box>
                                 </Grid>
                                 <Grid item xs={2}>
@@ -216,7 +219,7 @@ export default function BarcodeReader() {
                                 </Grid>
                                 <Grid item xs={8}>
                                     <Box textAlign='center'>
-                                        <TextField id="outlined-basic" label="NotionAPI Token" variant="outlined" defaultValue={token} value={token} onChange={onTokenTextChanged} />
+                                        <TextField id="outlined-basic" label="NotionAPI Token" variant="outlined" value={token} onChange={onTokenTextChanged} />
                                     </Box>
                                 </Grid>
                                 <Grid item xs={2}>
@@ -262,14 +265,14 @@ export default function BarcodeReader() {
                             </Grid>
                     }
                     {
-                        isScannerVisible ?
-                            <></>
-                            :
+                        (!isScannerVisible && uploadError !== '') ?
                             <Grid item xs={12}>
                                 <Box textAlign='center'>
                                     <Typography >{uploadError}</Typography>
                                 </Box>
                             </Grid>
+                            :
+                            <></>
                     }
                     {
                         isScannerVisible ?
@@ -494,36 +497,12 @@ const JSON_DATA = {
         }
     }
 }
-// export const add_item = (json_data: object, token: string) => {
-//     return new Promise<Response>((resolve, reject) => {
-//         const data = JSON.stringify(json_data);
-//         // console.log('add_item', data)
-//         var res = fetch(`api/notion_api`, {
-//             // var res = fetch(`${process.env.NEXT_PUBLIC_SITE}/api/notion_api`, {
-//             "headers": {
-//                 "accept": "application/json",
-//                 "Authorization": `Bearer ${token}`,
-//                 "Content-Type": `application/json`,
-//                 "Notion-Version": `2022-06-28`,
-//             },
-//             "method": "POST",
-//             "body": data
-//         });
-//         res.then((response: Response) => {
-//             if (response.status !== 200) {
-//                 reject(response);
-//             }
-//             console.log('add_item', response);
-//             response.json().then((json) => {
-//                 console.log('add_item json', json);
-//             })
-//         })
-//     });
-// }
 export const add_item = (json_data: object, token: string) => {
-    return new Promise((resolve, reject) => {
+    return new Promise<Response>((resolve, reject) => {
         const data = JSON.stringify(json_data);
-        var res = fetch(`https://api.notion.com/v1/pages`, {
+        // console.log('add_item', data)
+        var res = fetch(`api/notion_api`, {
+            // var res = fetch(`${process.env.NEXT_PUBLIC_SITE}/api/notion_api`, {
             "headers": {
                 "accept": "application/json",
                 "Authorization": `Bearer ${token}`,
@@ -533,16 +512,41 @@ export const add_item = (json_data: object, token: string) => {
             "method": "POST",
             "body": data
         });
-        res.then((result) => {
-            if (result.status != 200) {
-                console.log(result);
-                alert(`Error on uploading`);
-
-                reject(result);
-                return;
+        res.then((response: Response) => {
+            if (response.status !== 200) {
+                reject(response);
             }
-            resolve(result);
-            return;
-        });
+            console.log('add_item', response);
+            response.json().then((json) => {
+                console.log('add_item json', json);
+            })
+        })
     });
 }
+// export const add_item = (json_data: object, token: string) => {
+//     return new Promise((resolve, reject) => {
+//         const data = JSON.stringify(json_data);
+//         var res = fetch(`https://api.notion.com/v1/pages`, {
+//             "mode": 'no-cors',
+//             "headers": {
+//                 "accept": "application/json",
+//                 "Authorization": `Bearer ${token}`,
+//                 "Content-Type": `application/json`,
+//                 "Notion-Version": `2022-06-28`,
+//             },
+//             "method": "POST",
+//             "body": data
+//         });
+//         res.then((response) => {
+//             if (response.status != 200) {
+//                 console.log(response);
+//                 alert(`Error on uploading`);
+
+//                 reject(response);
+//                 return;
+//             }
+//             resolve(response);
+//             return;
+//         });
+//     });
+// }
