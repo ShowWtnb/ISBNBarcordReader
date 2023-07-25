@@ -72,7 +72,7 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError, onCanceled }) =>
   })
 
   function onCloseClick(event: any): void {
-    console.log('Scanner onCloseClick');
+    // console.log('Scanner onCloseClick');
     onCanceled();
   }
 
