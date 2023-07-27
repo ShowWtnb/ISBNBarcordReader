@@ -1,9 +1,10 @@
 import Scanner from "@/components/elements/barcord_reader/Scanner";
 import { validationIsbn } from "@/utils/isbn";
-import { Help, HelpOutline } from "@mui/icons-material";
-import { Box, Button, Checkbox, Grid, IconButton, TextField, Tooltip, Typography } from "@mui/material";
+import { Help, HelpOutline, Visibility, VisibilityOff } from "@mui/icons-material";
+import { Box, Button, Checkbox, FormControl, Grid, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useState, useEffect } from 'react'
-import { toast } from 'react-toastify'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css';
 import { HtmlTooltip } from "../ToolTip/HtmlTooltip";
 import { GetLocalStorage, SaveLocalStorage } from "@/utils/LocalStorage";
 import { NextApiResponse } from "next";
@@ -27,25 +28,63 @@ export default function BarcodeReader() {
         setIsScannerVisible(true);
     }
     const [uploadError, setUploadError] = useState<string>()
-    function onClickUploadButton(event: any): void {
+    // アップロードする
+    async function onClickUploadButton(event: any): Promise<void> {
         // console.log('BarcodeReader onClickUploadButton', event);
-        // アップロードする
         var errorMessage = ''
         if (json2Notion !== undefined && json2Notion.parent.database_id !== undefined && json2Notion.parent.database_id !== 'N/A' && token !== undefined) {
+            // // async
+            // var res = await add_item(json2Notion, token);
+            // console.log('BarcodeReader onClickUploadButton error', res);
+            // if (res.ok) {
+            //     toast.success(`Book information successfully uploaded.`, {
+            //         position: 'bottom-center',
+            //     })
+            // } else {
+            //     const reason = res;
+            //     console.log('BarcodeReader onClickUploadButton error', reason)
+            //     errorMessage = (reason?.status + ' ' + reason?.statusText)
+            //     setUploadError(errorMessage)
+            //     const error_message = 'Some error occurred on uploading book info.'
+            //     toast.error(`Error: ${error_message}. ${errorMessage}`, {
+            //         position: 'bottom-center',
+            //     })
+            // }
+
+            // sync
             var res = add_item(json2Notion, token);
             res.then((response: any) => {
                 if (response.status !== 200) {
                     console.log('BarcodeReader onClickUploadButton error', response)
                     errorMessage = (response?.status + ' ' + response?.statusText)
                     setUploadError(errorMessage)
+                    return;
                 }
+                // else{
+                //     setSuccessMessage(`Book information successfully uploaded.`)
+                //     isShowSuccessMessage(true)
+                // }
+                toast.success(`Book information successfully uploaded.`, {
+                    position: 'bottom-center',
+                    delay: 2,
+                })
             }).catch((reason: any) => {
                 console.log('BarcodeReader onClickUploadButton error', reason)
                 errorMessage = (reason?.status + ' ' + reason?.statusText)
                 setUploadError(errorMessage)
+                const error_message = 'Some error occurred on uploading book info.'
+                toast.error(`Error: ${error_message}. ${errorMessage}`, {
+                    position: 'bottom-center',
+                })
+                return;
             })
         } else {
             console.log('BarcodeReader onClickUploadButton error', json2Notion, json2Notion.parent.database_id, token)
+            const error_message = 'Please check Notion Database ID and Notion API Token filled to upload book info to Notion.'
+            toast.error(`Error: ${error_message}`, {
+                position: 'bottom-center',
+            })
+            return;
         }
         setUploadError(errorMessage)
     }
@@ -54,6 +93,10 @@ export default function BarcodeReader() {
     }
     function onISBNRead(event: any): void {
         setIsScannerVisible(false);
+        toast.success(`Book information successfully uploaded.`, {
+            position: 'bottom-center',
+            delay: 2,
+        })
         setIsbn(event);
     }
     // ISBN
@@ -119,6 +162,11 @@ export default function BarcodeReader() {
             }
         }
     }, [token, tokenChecked])
+    const [showPassword, setShowPassword] = useState(false);
+    const handleClickShowPassword = () => setShowPassword((show) => !show);
+    const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+    };
 
     // 初期化
     useEffect(() => {
@@ -141,6 +189,7 @@ export default function BarcodeReader() {
     return (
         <>
             <Box margin={1} textAlign='center'>
+                <ToastContainer />
                 <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
                     <Grid item xs={12}>
                         <Box textAlign='center'>
@@ -153,7 +202,7 @@ export default function BarcodeReader() {
                             :
                             <Grid item xs={12}>
                                 <Box textAlign='center'>
-                                    <TextField id="outlined-basic" label="ISBN" variant="outlined" value={isbn} onChange={onIsbnTextChanged} />
+                                    <TextField autoComplete='off' id="outlined-basic" label="ISBN" variant="outlined" value={isbn} onChange={onIsbnTextChanged} />
                                 </Box>
                             </Grid>
                     }
@@ -162,35 +211,40 @@ export default function BarcodeReader() {
                             <></>
                             :
                             <>
-                                <Grid item xs={2}>
-                                    <Box textAlign='right'>
-                                        <HtmlTooltip
-                                            title={
-                                                <React.Fragment>
-                                                    <Typography color="inherit">Notion DB ID</Typography>
-                                                    {"How to get DB ID. "}<em>{""}</em> <b>{''}</b><a href="https://booknotion.site/setting-databaseid" target="_blank">look here</a>{'.'}<u>{''}</u>
-                                                </React.Fragment>
-                                            }
-                                        >
-                                            <span>
-                                                <IconButton disabled>
-                                                    <HelpOutline />
-                                                </IconButton>
-                                            </span>
-                                        </HtmlTooltip>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={8}>
-                                    <Box textAlign='center'>
-                                        <TextField id="outlined-basic" label="Notion DB ID" variant="outlined" value={DbId} onChange={onDbidTextChanged} />
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={2}>
-                                    <Box textAlign='left'>
-                                        <Tooltip title='**NOT SECURE** Save DB id on browser. Do not turn on on shared computers.' >
-                                            <Checkbox color="primary" checked={DBIDChecked} onChange={handleDBIDCheckBoxChange} />
-                                        </Tooltip>
-                                    </Box>
+                                <Grid item xs={12}>
+                                    <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
+
+                                        <Grid item >
+                                            <Box textAlign='right'>
+                                                <HtmlTooltip
+                                                    title={
+                                                        <React.Fragment>
+                                                            <Typography color="inherit">Notion DB ID</Typography>
+                                                            {"How to get DB ID. "}<em>{""}</em> <b>{''}</b><a href="https://booknotion.site/setting-databaseid" target="_blank">look here</a>{'.'}<u>{''}</u>
+                                                        </React.Fragment>
+                                                    }
+                                                >
+                                                    <span>
+                                                        <IconButton disabled>
+                                                            <HelpOutline />
+                                                        </IconButton>
+                                                    </span>
+                                                </HtmlTooltip>
+                                            </Box>
+                                        </Grid>
+                                        <Grid item >
+                                            <Box textAlign='center'>
+                                                <TextField id="outlined-basic" label="Notion DB ID" variant="outlined" value={DbId} onChange={onDbidTextChanged} />
+                                            </Box>
+                                        </Grid>
+                                        <Grid item >
+                                            <Box textAlign='left'>
+                                                <Tooltip title='**NOT SECURE** Save DB id on browser. Do not turn on on shared computers.' >
+                                                    <Checkbox color="primary" checked={DBIDChecked} onChange={handleDBIDCheckBoxChange} />
+                                                </Tooltip>
+                                            </Box>
+                                        </Grid>
+                                    </Grid>
                                 </Grid>
                             </>
                     }
@@ -199,35 +253,60 @@ export default function BarcodeReader() {
                             <></>
                             :
                             <>
-                                <Grid item xs={2}>
-                                    <Box textAlign='right'>
-                                        <HtmlTooltip
-                                            title={
-                                                <React.Fragment>
-                                                    <Typography color="inherit">Notion API Token</Typography>
-                                                    {"How to get API Token and apply to Notion database. "}<em>{""}</em> <b>{''}</b><a href="https://n-v-l.co/blog/what-is-notion-api#index_MoOg_c8n" target="_blank">look here</a>{'.'}<u>{''}</u>
-                                                </React.Fragment>
-                                            }
-                                        >
-                                            <span>
-                                                <IconButton disabled>
-                                                    <HelpOutline />
-                                                </IconButton>
-                                            </span>
-                                        </HtmlTooltip>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={8}>
-                                    <Box textAlign='center'>
-                                        <TextField id="outlined-basic" label="NotionAPI Token" variant="outlined" value={token} onChange={onTokenTextChanged} />
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={2}>
-                                    <Box textAlign='left'>
-                                        <Tooltip title='**NOT SECURE** Save DB id on browser. Do not turn on on shared computers.' >
-                                            <Checkbox color="primary" checked={tokenChecked} onChange={handleTokenCheckBoxChange} />
-                                        </Tooltip>
-                                    </Box>
+                                <Grid item xs={12}>
+                                    <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
+                                        <Grid item>
+                                            <Box textAlign='right'>
+                                                <HtmlTooltip
+                                                    title={
+                                                        <React.Fragment>
+                                                            <Typography color="inherit">Notion API Token</Typography>
+                                                            {"How to get API Token and apply to Notion database. "}<em>{""}</em> <b>{''}</b><a href="https://n-v-l.co/blog/what-is-notion-api#index_MoOg_c8n" target="_blank">look here</a>{'.'}<u>{''}</u>
+                                                        </React.Fragment>
+                                                    }
+                                                >
+                                                    <span>
+                                                        <IconButton disabled>
+                                                            <HelpOutline />
+                                                        </IconButton>
+                                                    </span>
+                                                </HtmlTooltip>
+                                            </Box>
+                                        </Grid>
+                                        <Grid item>
+                                            <Box textAlign='center'>
+                                                {/* <TextField id="outlined-basic" label="NotionAPI Token" variant="outlined" value={token} onChange={onTokenTextChanged} /> */}
+                                                <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
+                                                    <InputLabel htmlFor="outlined-adornment-password">Notion API Token</InputLabel>
+                                                    <OutlinedInput
+                                                        id="outlined-adornment-password"
+                                                        type={showPassword ? 'text' : 'password'}
+                                                        endAdornment={
+                                                            <InputAdornment position="end">
+                                                                <IconButton
+                                                                    aria-label="toggle password visibility"
+                                                                    onClick={handleClickShowPassword}
+                                                                    onMouseDown={handleMouseDownPassword}
+                                                                    edge="end"
+                                                                >
+                                                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                                </IconButton>
+                                                            </InputAdornment>
+                                                        }
+                                                        label={token}
+                                                        onChange={onTokenTextChanged}
+                                                    />
+                                                </FormControl>
+                                            </Box>
+                                        </Grid>
+                                        <Grid item>
+                                            <Box textAlign='left'>
+                                                <Tooltip title='**NOT SECURE** Save API Token on browser. Do not turn on on shared computers.' >
+                                                    <Checkbox color="primary" checked={tokenChecked} onChange={handleTokenCheckBoxChange} />
+                                                </Tooltip>
+                                            </Box>
+                                        </Grid>
+                                    </Grid>
                                 </Grid>
                             </>
                     }
@@ -301,7 +380,6 @@ const get_openBD = async (isbn: string) => {
             "method": "GET",
         });
         res.then((result) => {
-            // console.log('get_openBD', result);
             // resolve(result);
             // return;
             if (result.status != 200) {
@@ -311,7 +389,6 @@ const get_openBD = async (isbn: string) => {
                 return;
             }
             result.json().then((json) => {
-                // console.log('get_openBD', JSON.stringify(json));
                 const notion_json = convertOpenBD2Notion(json, isbn);
                 resolve(notion_json);
                 return;
@@ -323,9 +400,7 @@ const get_openBD = async (isbn: string) => {
 function convertOpenBD2Notion(a_json: any, isbn?: string) {
     var new_json = JSON.parse(JSON.stringify(JSON_DATA));
     const json = a_json[0];
-    // console.log('convertOpenBD2Notion', JSON.stringify(json));
 
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.summary?.title));
     if (json?.summary?.title != undefined) {
         new_json.properties.title.title = [
             {
@@ -336,8 +411,6 @@ function convertOpenBD2Notion(a_json: any, isbn?: string) {
         ]
     }
 
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.onix?.DescriptiveDetail?.Contributor));
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.summary?.author));
     if (json?.onix?.DescriptiveDetail?.Contributor != undefined) {
         var autors = [];
         for (let i = 0; i < json.onix.DescriptiveDetail?.Contributor.length; i++) {
@@ -352,14 +425,12 @@ function convertOpenBD2Notion(a_json: any, isbn?: string) {
 
     new_json.properties.Location.select = { "name": "Home" }
 
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.summary?.cover));
     if (json?.summary?.cover != undefined) {
         if (json?.summary?.cover != '') {
             new_json.properties.Thumbnail = { "url": json.summary.cover }
         }
     }
 
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.summary?.isbn));
     if (json?.summary?.isbn != undefined) {
         new_json.properties.ISBN_13.rich_text = [
             {
@@ -378,7 +449,6 @@ function convertOpenBD2Notion(a_json: any, isbn?: string) {
         ]
     }
 
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.onix?.PublishingDetail?.PublishingDate?.at(0)?.Date));
     if (json?.onix?.PublishingDetail?.PublishingDate?.at(0)?.Date != undefined) {
         if (json.onix.PublishingDetail.PublishingDate.at(0).Date != '') {
             new_json.properties.Publication.date = {
@@ -395,7 +465,6 @@ function convertOpenBD2Notion(a_json: any, isbn?: string) {
         }
     }
 
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.onix?.PublishingDetail?.Publisher?.PublisherName));
     if (json?.onix?.PublishingDetail?.Publisher?.PublisherName != undefined) {
         new_json.properties.Publisher.multi_select = [
             {
@@ -404,14 +473,12 @@ function convertOpenBD2Notion(a_json: any, isbn?: string) {
         ]
     }
 
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.onix?.ProductSupply?.SupplyDetail?.Price?.at(0)?.PriceAmount));
     if (json?.onix?.ProductSupply?.SupplyDetail?.Price?.at(0)?.PriceAmount != undefined) {
         new_json.properties.Price = {
             "number": parseInt(json.onix.ProductSupply.SupplyDetail.Price.at(0).PriceAmount)
         }
     }
 
-    // console.log('convertOpenBD2Notion', JSON.stringify(json?.onix?.CollateralDetail?.TextContent));
     if (json?.onix?.CollateralDetail?.TextContent != undefined) {
         var text = '';
         for (let i = 0; i < json.onix.CollateralDetail.TextContent.length; i++) {
@@ -520,6 +587,7 @@ export const add_item = (json_data: object, token: string) => {
             response.json().then((json) => {
                 console.log('add_item json', json);
             })
+            resolve(response);
         })
     });
 }
