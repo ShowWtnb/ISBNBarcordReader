@@ -1,7 +1,7 @@
 import Scanner from "@/components/elements/barcord_reader/Scanner";
 import { validationIsbn } from "@/utils/isbn";
 import { Help, HelpOutline, Visibility, VisibilityOff } from "@mui/icons-material";
-import { Box, Button, Checkbox, FormControl, Grid, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Checkbox, CircularProgress, FormControl, Grid, IconButton, InputAdornment, InputLabel, Modal, OutlinedInput, TextField, Tooltip, Typography } from "@mui/material";
 import React, { useState, useEffect } from 'react'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,6 +10,18 @@ import { GetLocalStorage, SaveLocalStorage } from "@/utils/LocalStorage";
 import { NextApiResponse } from "next";
 
 const LOCAL_ID = 'ISBN_BARCODE_READER';
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: '#0000',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
+
 
 export default function BarcodeReader() {
     const [isbn, setIsbn] = useState<number>()
@@ -53,6 +65,8 @@ export default function BarcodeReader() {
 
             // sync
             var res = add_item(json2Notion, token);
+            // TODO Progressの設定
+            setOnProgress(true)
             res.then((response: any) => {
                 if (response.status !== 200) {
                     console.log('BarcodeReader onClickUploadButton error', response)
@@ -66,7 +80,7 @@ export default function BarcodeReader() {
                 // }
                 toast.success(`Book information successfully uploaded.`, {
                     position: 'bottom-center',
-                    delay: 2,
+                    autoClose: 2000,
                 })
             }).catch((reason: any) => {
                 console.log('BarcodeReader onClickUploadButton error', reason)
@@ -77,6 +91,9 @@ export default function BarcodeReader() {
                     position: 'bottom-center',
                 })
                 return;
+            }).finally(() => {
+                // TODO Progressの解除
+                setOnProgress(false)
             })
         } else {
             console.log('BarcodeReader onClickUploadButton error', json2Notion, json2Notion.parent.database_id, token)
@@ -93,11 +110,11 @@ export default function BarcodeReader() {
     }
     function onISBNRead(event: any): void {
         setIsScannerVisible(false);
-        toast.success(`Book information successfully uploaded.`, {
-            position: 'bottom-center',
-            delay: 2,
-        })
         setIsbn(event);
+        toast.success(`Book information successfully read.`, {
+            position: 'bottom-center',
+            autoClose: 2000,
+        })
     }
     // ISBN
     useEffect(() => {
@@ -185,7 +202,7 @@ export default function BarcodeReader() {
             setTokenChecked(true);
         }
     }, [])
-
+    const [onProgress, setOnProgress] = useState(false);
     return (
         <>
             <Box margin={1} textAlign='center'>
@@ -366,7 +383,17 @@ export default function BarcodeReader() {
                     }
                 </Grid>
             </Box>
-
+            <Modal
+                open={onProgress}
+                // open={true}
+                // onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style} textAlign={'center'}>
+                    <CircularProgress />
+                </Box>
+            </Modal>
         </>
     );
 }
