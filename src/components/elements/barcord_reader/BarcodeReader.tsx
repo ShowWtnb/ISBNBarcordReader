@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
 // import HtmlTooltip from "../ToolTip/HtmlTooltip";
-import {HtmlTooltip} from "../ToolTip/HtmlTooltip";
+import { HtmlTooltip } from "../ToolTip/HtmlTooltip";
 import { GetLocalStorage, SaveLocalStorage } from "@/utils/LocalStorage";
 import { NextApiResponse } from "next";
 
@@ -25,11 +25,36 @@ const style = {
 
 
 export default function BarcodeReader() {
+    //#region 初期化
     const [isbn, setIsbn] = useState<number>()
     const [isScannerVisible, setIsScannerVisible] = useState<boolean>(false)
     const [scanError, setScanError] = useState<string>()
+    const [onProgress, setOnProgress] = useState(false)
     const [json2Notion, setJson2Notion] = useState(JSON_DATA)
-    // バーコードリーダーのコールバック
+    useEffect(() => {
+        // console.log('BarcodeReader json2Notion', json2Notion);
+        // if (json2Notion !== undefined) {
+
+        // }
+    }, [json2Notion])
+    useEffect(() => {
+        var id = GetLocalStorage(LOCAL_ID + 'NOTION_DB_ID');
+        if (!(id === undefined || id === null)) {
+            setDbid(id);
+            setDBIDChecked(true);
+            if (id !== undefined) {
+                json2Notion.parent.database_id = id;
+                setJson2Notion({ ...json2Notion })
+            }
+        }
+        var t = GetLocalStorage(LOCAL_ID + 'NOTION_API_TOKEN');
+        if (!(t === undefined || t === null)) {
+            setToken(t);
+            setTokenChecked(true);
+        }
+    }, [])
+    //#endregion
+    //#region バーコードリーダーのコールバック
     useEffect(() => {
         if (scanError) {
             toast.error(`Error: ${scanError}`, {
@@ -37,11 +62,30 @@ export default function BarcodeReader() {
             })
         }
     }, [scanError])
+    // ボタンが押された時のアクション
+    var toastVisible = false;
     function onClickButton(event: any): void {
+        toastVisible = false;
         setIsScannerVisible(true);
     }
+    function onScanCanceled(event: any): void {
+        setIsScannerVisible(false);
+    }
+    function onISBNRead(event: any): void {
+        if(!toastVisible){
+            toastVisible = true;
+            toast.success(`Book information successfully read.`, {
+                toastId: 'success1',
+                position: 'bottom-center',
+                autoClose: 2000,
+            })
+        }
+        setIsScannerVisible(false);
+        setIsbn(event);
+    }
+    //#endregion
+    //#region アップロードする
     const [uploadError, setUploadError] = useState<string>()
-    // アップロードする
     async function onClickUploadButton(event: any): Promise<void> {
         // console.log('BarcodeReader onClickUploadButton', event);
         var errorMessage = ''
@@ -106,18 +150,8 @@ export default function BarcodeReader() {
         }
         setUploadError(errorMessage)
     }
-    function onScanCanceled(event: any): void {
-        setIsScannerVisible(false);
-    }
-    function onISBNRead(event: any): void {
-        setIsScannerVisible(false);
-        setIsbn(event);
-        toast.success(`Book information successfully read.`, {
-            position: 'bottom-center',
-            autoClose: 2000,
-        })
-    }
-    // ISBN
+    //#endregion
+    //#region ISBN
     useEffect(() => {
         // console.log('BarcodeReader isbn', isbn);
         if (isbn !== undefined && validationIsbn(isbn.toString())) {
@@ -128,17 +162,13 @@ export default function BarcodeReader() {
             })
         }
     }, [isbn])
-    useEffect(() => {
-        // console.log('BarcodeReader json2Notion', json2Notion);
-        // if (json2Notion !== undefined) {
-
-        // }
-    }, [json2Notion])
-    // DBのID
+    // 
     function onIsbnTextChanged(event: any): void {
         // console.log('BarcodeReader onIsbnTextChanged', event.target.value);
         setIsbn(event.target.value);
     }
+    //#endregion
+    //#region DBのID
     const [DbId, setDbid] = useState<string>('')
     function onDbidTextChanged(event: any): void {
         // console.log('BarcodeReader onDbidTextChanged', event.target.value);
@@ -161,7 +191,8 @@ export default function BarcodeReader() {
             setJson2Notion({ ...json2Notion })
         }
     }, [DbId, DBIDChecked])
-    // Token
+    //#endregion
+    //#region Token
     const [token, setToken] = useState<string>('')
     function onTokenTextChanged(event: any): void {
         // console.log('BarcodeReader onTokenTextChanged', event.target.value);
@@ -180,58 +211,46 @@ export default function BarcodeReader() {
             }
         }
     }, [token, tokenChecked])
+    //#endregion
+    //#region パスワードボックス
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
     };
+    //#endregion
 
-    // 初期化
-    useEffect(() => {
-        var id = GetLocalStorage(LOCAL_ID + 'NOTION_DB_ID');
-        if (!(id === undefined || id === null)) {
-            setDbid(id);
-            setDBIDChecked(true);
-            if (id !== undefined) {
-                json2Notion.parent.database_id = id;
-                setJson2Notion({ ...json2Notion })
-            }
-        }
-        var t = GetLocalStorage(LOCAL_ID + 'NOTION_API_TOKEN');
-        if (!(t === undefined || t === null)) {
-            setToken(t);
-            setTokenChecked(true);
-        }
-    }, [])
-    const [onProgress, setOnProgress] = useState(false);
     return (
         <>
             <Box margin={1} textAlign='center'>
                 <ToastContainer />
                 <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
-                    <Grid item xs={12}>
-                        <Box textAlign='center'>
-                            <Button variant="outlined" onClick={onClickButton}>Read Barcode</Button>
-                        </Box>
-                    </Grid>
                     {
                         isScannerVisible ?
-                            <></>
+                            <>{/* スキャン画面 */}
+                                <Grid item xs={12}>
+                                    <Box textAlign='center'>
+                                        <Scanner receiveIsbn={onISBNRead} receiveError={setScanError} onCanceled={onScanCanceled} />
+                                    </Box>
+                                </Grid>
+                            </>
                             :
-                            <Grid item xs={12}>
-                                <Box textAlign='center'>
-                                    <TextField autoComplete='off' id="outlined-basic" label="ISBN" variant="outlined" value={isbn} onChange={onIsbnTextChanged} />
-                                </Box>
-                            </Grid>
-                    }
-                    {
-                        isScannerVisible ?
-                            <></>
-                            :
-                            <>
+                            <>{/* メイン画面 */}
+                            {/* スキャン画面を出すボタン */}
+                                <Grid item xs={12}>
+                                    <Box textAlign='center'>
+                                        <Button variant="outlined" onClick={onClickButton}>Read Barcode</Button>
+                                    </Box>
+                                </Grid>
+                            {/* ISBNを入力するテキストボックス */}
+                                <Grid item xs={12}>
+                                    <Box textAlign='center'>
+                                        <TextField autoComplete='off' id="outlined-basic" label="ISBN" variant="outlined" value={isbn} onChange={onIsbnTextChanged} />
+                                    </Box>
+                                </Grid>
+                            {/* DBのIDを入力するテキストボックス */}
                                 <Grid item xs={12}>
                                     <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
-
                                         <Grid item >
                                             <Box textAlign='right'>
                                                 <HtmlTooltip
@@ -264,13 +283,7 @@ export default function BarcodeReader() {
                                         </Grid>
                                     </Grid>
                                 </Grid>
-                            </>
-                    }
-                    {
-                        isScannerVisible ?
-                            <></>
-                            :
-                            <>
+                            {/* Tokenを入力するテキストボックス */}
                                 <Grid item xs={12}>
                                     <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
                                         <Grid item>
@@ -326,61 +339,37 @@ export default function BarcodeReader() {
                                         </Grid>
                                     </Grid>
                                 </Grid>
-                            </>
-                    }
-                    {
-                        (!isScannerVisible && json2Notion !== undefined && json2Notion?.properties?.title?.title?.at(0)?.text?.content !== 'N/A') ?
-                            <>
-                                <Grid item xs={10}>
-                                    <Box margin={1} sx={{ p: 2, border: '1px solid grey' }}>
-                                        <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
-                                            <Grid item xs={6}>
-                                                <Box margin={1} textAlign='right'>
-                                                    <Typography>{json2Notion?.properties?.title?.title?.at(0)?.text?.content}</Typography>
+                            {/* 書籍情報を表示するボックス */}
+                                {
+                                    (json2Notion !== undefined && json2Notion?.properties?.title?.title?.at(0)?.text?.content !== 'N/A') ?
+                                        <>
+                                            <Grid item xs={10}>
+                                                <Box margin={1} sx={{ p: 2, border: '1px solid grey' }}>
+                                                    <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
+                                                        <Grid item xs={6}>
+                                                            <Box margin={1} textAlign='right'>
+                                                                <Typography>{json2Notion?.properties?.title?.title?.at(0)?.text?.content}</Typography>
+                                                            </Box>
+                                                        </Grid>
+                                                        <Grid item xs={6}>
+                                                            <Box margin={1} textAlign='left'>
+                                                                <Typography>{json2Notion?.properties?.Authors.multi_select.at(0)?.name}</Typography>
+                                                            </Box>
+                                                        </Grid>
+                                                    </Grid>
                                                 </Box>
                                             </Grid>
-                                            <Grid item xs={6}>
-                                                <Box margin={1} textAlign='left'>
-                                                    <Typography>{json2Notion?.properties?.Authors.multi_select.at(0)?.name}</Typography>
-                                                </Box>
-                                            </Grid>
-                                        </Grid>
-                                    </Box>
-                                </Grid>
-                            </>
-                            :
-                            <></>
-                    }
-                    {
-                        isScannerVisible ?
-                            <></>
-                            :
-                            <Grid item xs={12}>
-                                <Box textAlign='center'>
-                                    <Button variant="contained" onClick={onClickUploadButton}>Upload to Notion</Button>
-                                </Box>
-                            </Grid>
-                    }
-                    {
-                        (!isScannerVisible && uploadError !== '') ?
-                            <Grid item xs={12}>
-                                <Box textAlign='center'>
-                                    <Typography >{uploadError}</Typography>
-                                </Box>
-                            </Grid>
-                            :
-                            <></>
-                    }
-                    {
-                        isScannerVisible ?
-                            <>
+                                        </>
+                                        :
+                                        <></>
+                                }
+                            {/* アップロードするボタン */}
                                 <Grid item xs={12}>
                                     <Box textAlign='center'>
-                                        <Scanner receiveIsbn={onISBNRead} receiveError={setScanError} onCanceled={onScanCanceled} />
+                                        <Button variant="contained" onClick={onClickUploadButton}>Upload to Notion</Button>
                                     </Box>
                                 </Grid>
                             </>
-                            : <></>
                     }
                 </Grid>
             </Box>

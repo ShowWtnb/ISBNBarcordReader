@@ -11,6 +11,8 @@ interface PropsI {
   onCanceled: any
 }
 
+const retryCountMax = 10;
+
 const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError, onCanceled }) => {
   let scannerAttempts = 0
 
@@ -21,11 +23,11 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError, onCanceled }) =>
     console.log(isbnCode);
 
     if (validationIsbn(isbnCode)) {
-      console.log('isbn read ' + isbnCode);
+      console.log('isbn read', isbnCode);
       receiveIsbn(isbnCode)
-    } else if (scannerAttempts >= 5) {
-      console.log('It is not possible to read the code of the book');
-      receiveError('It is not possible to read the code of the book')
+    } else if (scannerAttempts >= retryCountMax) {
+      // console.log('It is not possible to read the code of the book');
+      receiveError('ISBN\'s barcode start with 978. If this message appears repeatedly, you should cover other unrelated barcode up.')
     }
     scannerAttempts++
     Quagga.onDetected(onDetected)
@@ -88,7 +90,6 @@ const Scanner: React.FC<PropsI> = ({ receiveIsbn, receiveError, onCanceled }) =>
           <IconButton aria-label="close" onClick={onCloseClick}>
             <Close />
           </IconButton>
-
         </Tooltip>
       </Container>
     </>

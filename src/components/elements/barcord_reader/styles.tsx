@@ -17,6 +17,7 @@ export const Container = styled.section`
   justify-content: center;
   align-items: center;
   top: 20%;
+  left: 0%;
   width: 100%;
   height: 60%;
 `
