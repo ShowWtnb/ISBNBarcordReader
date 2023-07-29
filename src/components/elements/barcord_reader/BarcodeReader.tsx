@@ -23,7 +23,6 @@ const style = {
     p: 4,
 };
 
-
 export default function BarcodeReader() {
     //#region 初期化
     const [isbn, setIsbn] = useState<number>()
@@ -72,7 +71,7 @@ export default function BarcodeReader() {
         setIsScannerVisible(false);
     }
     function onISBNRead(event: any): void {
-        if(!toastVisible){
+        if (!toastVisible) {
             toastVisible = true;
             toast.success(`Book information successfully read.`, {
                 toastId: 'success1',
@@ -219,7 +218,37 @@ export default function BarcodeReader() {
         event.preventDefault();
     };
     //#endregion
+    //#region 戻るボタンの検知
+    const handlePopstate = () => {
+        // const isDiscardedOK = confirm(
+        //     '保存されていないデータは削除されますが、よろしいですか？',
+        // );
+        // if (isDiscardedOK) {
+        //     // OKの場合、historyAPIで戻るを実行します。
+        //     window.history.back();
+        //     setIsScannerVisible(false);
+        // }
+        // // キャンセルの場合、 ダミー履歴を挿入して「戻る」を1回分吸収できる状態にする
+        // history.pushState(null, '', null);
+        window.history.back();
+        setIsScannerVisible(false);
 
+    };
+
+    useEffect(() => {
+        // 編集中になったとき、現在のページを履歴に挿入し、handlePopstateをイベント登録
+        if (isScannerVisible) {
+            // ダミー履歴を挿入して「戻る」を1回分吸収できる状態にする
+            history.pushState(null, '', null);
+            window.addEventListener('popstate', handlePopstate, false);
+        }
+        // 他のページに影響しないようclear
+        return () => {
+            window.removeEventListener('popstate', handlePopstate, false);
+        };
+    }, [isScannerVisible]);
+
+    //#endregion
     return (
         <>
             <Box margin={1} textAlign='center'>
@@ -236,19 +265,19 @@ export default function BarcodeReader() {
                             </>
                             :
                             <>{/* メイン画面 */}
-                            {/* スキャン画面を出すボタン */}
+                                {/* スキャン画面を出すボタン */}
                                 <Grid item xs={12}>
                                     <Box textAlign='center'>
                                         <Button variant="outlined" onClick={onClickButton}>Read Barcode</Button>
                                     </Box>
                                 </Grid>
-                            {/* ISBNを入力するテキストボックス */}
+                                {/* ISBNを入力するテキストボックス */}
                                 <Grid item xs={12}>
                                     <Box textAlign='center'>
                                         <TextField autoComplete='off' id="outlined-basic" label="ISBN" variant="outlined" value={isbn} onChange={onIsbnTextChanged} />
                                     </Box>
                                 </Grid>
-                            {/* DBのIDを入力するテキストボックス */}
+                                {/* DBのIDを入力するテキストボックス */}
                                 <Grid item xs={12}>
                                     <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
                                         <Grid item >
@@ -283,7 +312,7 @@ export default function BarcodeReader() {
                                         </Grid>
                                     </Grid>
                                 </Grid>
-                            {/* Tokenを入力するテキストボックス */}
+                                {/* Tokenを入力するテキストボックス */}
                                 <Grid item xs={12}>
                                     <Grid container spacing={1} alignItems={'center'} alignContent={'center'} justifyContent={'center'}>
                                         <Grid item>
@@ -339,7 +368,7 @@ export default function BarcodeReader() {
                                         </Grid>
                                     </Grid>
                                 </Grid>
-                            {/* 書籍情報を表示するボックス */}
+                                {/* 書籍情報を表示するボックス */}
                                 {
                                     (json2Notion !== undefined && json2Notion?.properties?.title?.title?.at(0)?.text?.content !== 'N/A') ?
                                         <>
@@ -363,7 +392,7 @@ export default function BarcodeReader() {
                                         :
                                         <></>
                                 }
-                            {/* アップロードするボタン */}
+                                {/* アップロードするボタン */}
                                 <Grid item xs={12}>
                                     <Box textAlign='center'>
                                         <Button variant="contained" onClick={onClickUploadButton}>Upload to Notion</Button>
