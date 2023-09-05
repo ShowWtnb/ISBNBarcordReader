@@ -30,15 +30,23 @@ export default function handler(
         });
         result.then((result) => {
             if (result.status != 200) {
-                console.log('notion_api Error', result);
-                // alert(`Error on uploading`);
+                console.log('notion_api Error', result.status, result.statusText);
+                // console.log('notion_api Error', result.body);
+                const string = new Response(result.body).text();
+                string.then((text) => {
+                    // console.log('notion_api Error', text);
+                    // console.log('notion_api Error', JSON.parse(text));
+                    res.status(result.status).json(JSON.parse(text))
+                    return;
+                });
+
+                // res.status(result.status).json(result.body)
+                // return;
+            }else{
                 res.status(result.status).json(result.body)
-                // reject(result);
+
                 return;
             }
-            res.status(result.status).json(result.body)
-
-            return;
         });
     } else if (req.method === 'GET') {
         res.status(200).json({ 'test': 'test body' })

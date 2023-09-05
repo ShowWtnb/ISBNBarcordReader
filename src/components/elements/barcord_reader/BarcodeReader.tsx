@@ -108,14 +108,23 @@ export default function BarcodeReader() {
             // }
 
             // sync
+            console.log('BarcodeReader onClickUploadButton', json2Notion)
             var res = add_item(json2Notion, token);
-            // TODO Progressの設定
+            // Progressの設定
             setOnProgress(true)
             res.then((response: any) => {
                 if (response.status !== 200) {
                     console.log('BarcodeReader onClickUploadButton error', response)
                     errorMessage = (response?.status + ' ' + response?.statusText)
-                    setUploadError(errorMessage)
+
+                    const string = new Response(response.body).text();
+                    string.then((text) => {
+                        console.log('notion_api Error', text);
+                        const txtJson = JSON.parse(text)
+                        errorMessage = ('Error:' + txtJson.status + ' ' + txtJson.code + ' ' + txtJson.message)
+                        setUploadError(errorMessage)
+                    });
+                    // setUploadError(errorMessage)
                     return;
                 }
                 // else{
@@ -127,13 +136,14 @@ export default function BarcodeReader() {
                     autoClose: 2000,
                 })
             }).catch((reason: any) => {
-                console.log('BarcodeReader onClickUploadButton error', reason)
+                console.log('BarcodeReader onClickUploadButton catch', reason)
                 errorMessage = (reason?.status + ' ' + reason?.statusText)
                 setUploadError(errorMessage)
-                const error_message = 'Some error occurred on uploading book info.'
-                toast.error(`Error: ${error_message}. ${errorMessage}`, {
-                    position: 'bottom-center',
-                })
+
+                // const error_message = 'Some error occurred on uploading book info.'
+                // toast.error(`Error: ${error_message}. ${errorMessage}`, {
+                //     position: 'bottom-center',
+                // })
                 return;
             }).finally(() => {
                 // TODO Progressの解除
@@ -457,16 +467,20 @@ function convertOpenBD2Notion(a_json: any, isbn?: string) {
         ]
     }
 
+    // 作者名がカンマで区切られている場合がある
+    // カンマは仕様で許可されていないInvalid select option, commas not allowed
     if (json?.onix?.DescriptiveDetail?.Contributor != undefined) {
         var autors = [];
         for (let i = 0; i < json.onix.DescriptiveDetail?.Contributor.length; i++) {
             const element = json.onix.DescriptiveDetail?.Contributor[i];
-            const a = element?.PersonName?.content;
+            var a = element?.PersonName?.content;
+            a = validationAuthorTextFormat(a);
             autors.push({ "name": a });
         }
         new_json.properties.Authors.multi_select = autors;
     } else if (json?.summary?.author != undefined) {
-        new_json.properties.Authors.multi_select = [{ "name": json.summary.author }];
+        var a2 = validationAuthorTextFormat(json.summary.author);
+        new_json.properties.Authors.multi_select = [{ "name": a2 }];
     }
 
     new_json.properties.Location.select = { "name": "Home" }
@@ -541,6 +555,30 @@ function convertOpenBD2Notion(a_json: any, isbn?: string) {
     }
 
     return new_json;
+}
+function validationAuthorTextFormat(text: string): string {
+    var res = text;
+    // カンマを取り除く
+    const commas = ',';
+    if (res.includes(commas)) {
+        var sub = res.split(commas);
+        res = "";
+        for (let i = 0; i < sub.length; i++) {
+            const element = sub[i];
+            res += element
+        }
+    }
+    // スペースを取り除く（禁止されているわけではないが、気持ち悪いので）
+    const space = ' ';
+    if (res.includes(space)) {
+        var sub = res.split(space);
+        res = "";
+        for (let i = 0; i < sub.length; i++) {
+            const element = sub[i];
+            res += element
+        }
+    }
+    return res;
 }
 const JSON_DATA = {
     "parent": {
@@ -626,16 +664,58 @@ export const add_item = (json_data: object, token: string) => {
             "body": data
         });
         res.then((response: Response) => {
+            // console.log('add_item error', response)
             if (response.status !== 200) {
-                reject(response);
+                // // console.log('add_item error', response.body)
+                // // console.log('add_item error', response.json())
+                // response.json().then((json)=>{
+                //     console.log('add_item error json', json)
+                //     reject(response);
+
+                // })
+                const string = new Response(response.body).text();
+                string.then((text: any) => {
+                    // console.log('add_item error text', text);
+                    // console.log('add_item error text', text.status);
+                    // text = removeBackSlash(text)
+                    // console.log('add_item error text', text);
+                    const txtJson = JSON.parse(text)
+                    // console.log('add_item error txtJson', txtJson);
+                    var errorMessage = ('Error:' + txtJson.status + ' ' + txtJson.code + ' ' + txtJson.message)
+                    // var errorMessage = ('Error:' + newJ.status + ' ' + newJ.code + ' ' + newJ.message)
+                    // console.log('add_item error errorMessage', errorMessage)
+                    console.log('add_item error txtJson', txtJson)
+
+                    toast.error(errorMessage, {
+                        position: 'bottom-center',
+                    })
+                    reject(response);
+                    return
+                });
+            }else{
+                console.log('add_item', response);
+                response.json().then((json) => {
+                    console.log('add_item json', json);
+                })
+                resolve(response);
+                return
             }
-            console.log('add_item', response);
-            response.json().then((json) => {
-                console.log('add_item json', json);
-            })
-            resolve(response);
         })
     });
+}
+function removeBackSlash(text:string){
+    var res = text
+    // カンマを取り除く
+    const commas = '\\';
+    if (res.includes(commas)) {
+        var sub = res.split(commas);
+        res = "";
+        for (let i = 0; i < sub.length; i++) {
+            const element = sub[i];
+            res += element
+        }
+    }
+    return res;
 }
 // export const add_item = (json_data: object, token: string) => {
 //     return new Promise((resolve, reject) => {
